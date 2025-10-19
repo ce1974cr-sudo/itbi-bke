@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Conexão com o banco PostgreSQL remoto
-DB_URL = "postgresql://itbi_db_user:O3RMcc3RuNFvIDZF4LEVb0rn7JTKs5Uz@dpg-d3qgnpgdl3ps73buogcg-a.oregon-postgres.render.com/itbi_db"
+DB_URL = os.getenv("DATABASE_URL")
 
 try:
     conn = psycopg.connect(DB_URL, autocommit=True)
