@@ -1,10 +1,10 @@
 import os
-import psycopg  # Mantido como psycopg
+import psycopg
 from flask import Flask, jsonify, request
-from flask_cors import flask_cors import CORS
+from flask_cors import CORS  # Importação corrigida
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Permite requisições do frontend
 
 # Conexão com o banco PostgreSQL remoto
 DB_URL = os.getenv("DATABASE_URL")
@@ -45,7 +45,7 @@ def transacoes(id):
     try:
         numero = request.args.get("numero")
         with conn.cursor() as cur:
-            # Ajustado para a tabela 'transacoes_opt' - Ajuste colunas se necessário
+            # Usa tabela transacoes_opt
             query = "SELECT id, numero, data, valor FROM transacoes_opt WHERE id = %s OR numero = %s"
             cur.execute(query, (id, numero))
             rows = cur.fetchall()
