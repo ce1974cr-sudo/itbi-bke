@@ -43,10 +43,14 @@ def transacoes(id):
     if conn is None:
         return jsonify({"error": "Sem conexão com o banco"}), 500
     try:
-        numero = request.args.get("numero")
+        numero = request.args.get("numero")  # Pega ?numero=600
         with conn.cursor() as cur:
-            # Usa tabela transacoes_opt
-            query = "SELECT id, numero, data, valor FROM transacoes_opt WHERE id = %s OR numero = %s"
+            # Query ajustada para as colunas reais de transacoes_opt
+            query = """
+                SELECT sql, logradouro, numero, cep, valor_transacao, data_transacao, complemento
+                FROM transacoes_opt
+                WHERE sql = %s OR numero = %s
+            """
             cur.execute(query, (id, numero))
             rows = cur.fetchall()
             if not rows:
