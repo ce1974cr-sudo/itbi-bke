@@ -1,23 +1,29 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-import psycopg
 import os
+import psycopg  # Mantido como psycopg (psycopg3)
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Permite requisições do frontend
 
 # Conexão com o banco PostgreSQL remoto
 DB_URL = os.getenv("DATABASE_URL")
 
-try:
-    conn = psycopg.connect(DB_URL, autocommit=True)
-except Exception as e:
-    print("Erro ao conectar ao banco:", e)
-    conn = None
+def get_db_connection():
+    try:
+        conn = psycopg.connect(DB_URL, autocommit=True)
+        print("Conexão com BD bem-sucedida")  # Log para depuração
+        return conn
+    except Exception as e:
+        print(f"Erro ao conectar ao banco: {e}")
+        return None
+
+# Inicializa conexão ao iniciar o app
+conn = get_db_connection()
 
 @app.route("/")
 def home():
-    return "API ITBI Online"
+    return jsonify({"message": "API ITBI Online"})
 
 @app.route("/clientes")
 def clientes():
@@ -30,7 +36,34 @@ def clientes():
             data = [{"id": r[0], "nome": r[1], "endereco": r[2]} for r in rows]
             return jsonify(data)
     except Exception as e:
+        print(f"Erro na query de clientes: {e}")  # Log para depuração
         return jsonify({"error": str(e)}), 500
 
+@app.route("/transacoes/<id>", methods=["GET"])
+def transacoes(id):
+    if conn is None:
+        return jsonify({"error": "Sem conexão com o banco"}), 500
+    try:
+        numero = request.args.get("numero")  # Pega ?numero=325 da query string
+        with conn.cursor() as cur:
+            # Ajuste a query para sua tabela real (exemplo abaixo)
+            query = "SELECT id, numero, data, valor FROM transacoes WHERE id = %s OR numero = %s"
+            cur.execute(query, (id, numero))
+            rows = cur.fetchall()
+            if not rows:
+                return jsonify({"error": "Transação não encontrada"}), 404
+            # Converte resultado em lista de dicionários
+            columns = [desc.name for desc in cur.description]  # Usando .name para psycopg3
+            data = [dict(zip(columns, row)) for row in rows]
+            return jsonify({
+                "id": id,
+                "numero": numero,
+                "transacoes": data
+            })
+    except Exception as e:
+        print(f"Erro na query de transações: {e}")  # Log para depuração
+        return jsonify({"error": str(e)}), 500
+
+# Para produção, não use app.run(); gunicorn gerencia o servidor
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)  # Apenas para dev local
