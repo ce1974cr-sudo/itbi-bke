@@ -46,22 +46,29 @@ def transacoes(id):
     try:
         numero = request.args.get("numero")
 
-        # Normaliza inputs para comparação textual (evita mismatch de tipo)
-        id_str = str(id) if id is not None else None
-        numero_str = str(numero) if numero is not None else None
+        # Normaliza inputs
+        id_str = str(id).strip() if id else None
+        numero_str = str(numero).strip() if numero else None
 
-        # Query: usa o identificador escapado "sql" e faz cast para TEXT para evitar problemas de tipo.
-        # Usa OR entre os filtros (comparo textual consistente).
+        # Usa LIKE para comparar os 6 primeiros dígitos do campo "sql"
+        # CAST garante que o campo seja tratado como texto
         query = """
             SELECT "sql", logradouro, numero, cep, valor_transacao, data_transacao, complemento
             FROM transacoes_opt
-            WHERE CAST("sql" AS TEXT) = %s OR CAST(numero AS TEXT) = %s
-            ORDER BY data_transacao DESC
-            LIMIT 200
+            WHERE CAST("sql" AS TEXT) LIKE %s
         """
 
+        params = [f"{id_str}%"]
+
+        # Se também vier número, adiciona no filtro
+        if numero_str:
+            query += " AND CAST(numero AS TEXT) = %s"
+            params.append(numero_str)
+
+        query += " ORDER BY data_transacao DESC LIMIT 200"
+
         with conn.cursor() as cur:
-            cur.execute(query, (id_str, numero_str))
+            cur.execute(query, tuple(params))
             rows = cur.fetchall()
 
             if not rows:
