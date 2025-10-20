@@ -3,10 +3,9 @@ import psycopg
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-app = Flask(__name__)  # Definição de 'app' NO INÍCIO, antes de qualquer rota
-CORS(app)  # Permite requisições do frontend
+app = Flask(__name__)  # Definido no início
+CORS(app)
 
-# Conexão com o banco PostgreSQL remoto
 DB_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
@@ -43,9 +42,8 @@ def transacoes(id):
     if conn is None:
         return jsonify({"error": "Sem conexão com o banco"}), 500
     try:
-        numero = request.args.get("numero")  # Pega ?numero=600
+        numero = request.args.get("numero")
         with conn.cursor() as cur:
-            # Filtragem corrigida: usa AND para exigir ambos sql e numero
             if numero:
                 query = """
                     SELECT sql, logradouro, numero, cep, valor_transacao, data_transacao, complemento
