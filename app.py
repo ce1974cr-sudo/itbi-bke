@@ -1,11 +1,12 @@
 import os
 import psycopg
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS  # Importação corrigida
 
-app = Flask(__name__)  # Definido no início
-CORS(app)
+app = Flask(__name__)
+CORS(app)  # Permite requisições do frontend
 
+# Conexão com o banco PostgreSQL remoto
 DB_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
@@ -42,22 +43,15 @@ def transacoes(id):
     if conn is None:
         return jsonify({"error": "Sem conexão com o banco"}), 500
     try:
-        numero = request.args.get("numero")
+        numero = request.args.get("numero")  # Pega ?numero=600
         with conn.cursor() as cur:
-            if numero:
-                query = """
-                    SELECT sql, logradouro, numero, cep, valor_transacao, data_transacao, complemento
-                    FROM transacoes_opt
-                    WHERE sql = %s AND numero = %s
-                """
-                cur.execute(query, (id, numero))
-            else:
-                query = """
-                    SELECT sql, logradouro, numero, cep, valor_transacao, data_transacao, complemento
-                    FROM transacoes_opt
-                    WHERE sql = %s
-                """
-                cur.execute(query, (id,))
+            # Query ajustada para as colunas reais de transacoes_opt
+            query = """
+                SELECT sql, logradouro, numero, cep, valor_transacao, data_transacao, complemento
+                FROM transacoes_opt
+                WHERE sql = %s OR numero = %s
+            """
+            cur.execute(query, (id, numero))
             rows = cur.fetchall()
             if not rows:
                 return jsonify({"error": "Transação não encontrada"}), 404
