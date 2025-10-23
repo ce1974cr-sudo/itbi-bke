@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS  # Importação corrigida
 
 app = Flask(__name__)
-CORS(app)  # Permite requisições do frontend
+CORS(app, resources={r"/*": {"origins": "https://itbi-fen.onrender.com"}})  # Permite requisições do frontend
 
 # Conexão com o banco PostgreSQL remoto
 DB_URL = os.getenv("DATABASE_URL")
